@@ -1,0 +1,281 @@
+ AS V1.42 Beta [Bld 88] - source file 4004lcd.asm - page 1 - 6/25/2020 12:09:10
+
+
+       1/       0 :                     ;"%d\as-v1.42\bin\asw.exe -cpu 4004 -L %e.asm"
+       2/       0 :                     ;"%d\as-v1.42\bin\p2hex.exe %e.p %e.hex -F Intel"
+       3/       0 :                         CPU 4004
+       4/       0 :                         RELAXED ON
+       5/       0 :                     
+       6/       0 : D0                      LDM 0               ; Load 0 to accumulator
+       7/       1 : FD                      DCL                 ; Select CM-RAM0 line
+       8/       2 :                     
+       9/       2 : 24 00                   FIM R4R5, 0         ; Clear R4R5 register pair
+      10/       4 : 25                      SRC R4R5            ; Select position in RAM (zero)
+      11/       5 : D5                      LDM 5               ; Load 0101 pattern
+      12/       6 : E1                      WMP                 ; Write to selected RAM port
+      13/       7 : F4                      CMA                 ; Complement accumulator (1010)
+      14/       8 : E2                      WRR                 ; Write ROM port (4289 I/O)
+      15/       9 :                     
+      16/       9 : D2                      LDM 2               ; Load 2 to acc
+      17/       A : FD                      DCL                 ; Select CM-RAM2 bank
+      18/       B :                     ;   LDM 4                ;
+      19/       B :                     ;   WMP                  ;
+      20/       B :                     ;   LDM 15               ;
+      21/       B :                     ;   WMP                  ;
+      22/       B : 24 80                   FIM R4R5, $80       ; Load 0x80
+      23/       D : 25                      SRC R4R5            ; Select position in 4265 chip
+      24/       E : D4                      LDM 4               ; Load 4 to acc
+      25/       F : E1                      WMP                 ; Write
+      26/      10 : DF                      LDM 15              ; Load 15 to acc
+      27/      11 : E1                      WMP                 ; Write
+      28/      12 :                     
+      29/      12 :                         ;WRR                 ;
+      30/      12 : DF                      LDM 15              ; Load 15 to acc
+      31/      13 : E0                      WRM                 ; Write to main memory
+      32/      14 :                         
+      33/      14 : 50 58                   JMS DELAY16MS        ; 
+      34/      16 :                     
+      35/      16 : D3                      LDM 3               ; LCD initialization start, 8-bit mode
+      36/      17 : 50 B5                   JMS LCDdirect       ;
+      37/      19 : 50 51                   JMS DELAY5MS4        ; 
+      38/      1B :                         
+      39/      1B : D3                      LDM 3               ; 8-bit mode
+      40/      1C : 50 B5                   JMS LCDdirect       ;
+      41/      1E : 50 4C                   JMS DELAY320US        ; 
+      42/      20 :                     
+      43/      20 : D3                      LDM 3               ; 8-bit mode
+      44/      21 : 50 B5                   JMS LCDdirect       ;
+      45/      23 :                         ;JMS DELAY1S4        ; 
+      46/      23 :                         
+      47/      23 : D2                      LDM 2               ; 4-bit mode
+      48/      24 : 50 B5                   JMS LCDdirect       ;
+      49/      26 :                         ;JMS DELAY1S4        ; 
+      50/      26 :                         
+      51/      26 : 28 28                   FIM R8R9, 0x28      ;
+      52/      28 : 50 A6                   JMS LCDctrl         ; nastav 2 radky, 5x7 font
+      53/      2A :                         ;JMS DELAY1S4        ; 
+      54/      2A : 28 08                   FIM R8R9, 0x08      ;
+      55/      2C : 50 A6                   JMS LCDctrl         ; nastav displej off, kurzor off, blikani off
+      56/      2E :                         ;JMS DELAY1S4        ; 
+      57/      2E : 28 01                   FIM R8R9, 0x01      ;
+      58/      30 : 50 A6                   JMS LCDctrl         ; displej clear, pozice 0
+      59/      32 : 50 51                   JMS DELAY5MS4        ; 
+      60/      34 :                     
+ AS V1.42 Beta [Bld 88] - source file 4004lcd.asm - page 2 - 6/25/2020 12:09:10
+
+
+      61/      34 : 28 06                   FIM R8R9, 0x06      ; posun kurzoru doprava
+      62/      36 : 50 A6                   JMS LCDctrl         ;
+      63/      38 :                         ;JMS DELAY1S4        ; 
+      64/      38 : 28 0C                   FIM R8R9, 0x0C      ; nastav displej on, kurzor off, blikani off 0C
+      65/      3A : 50 A6                   JMS LCDctrl         ;
+      66/      3C :                         ;JMS DELAY1S4        ; 
+      67/      3C :                     
+      68/      3C : 20 BD                   FIM R0R1, LCDmsg0   ;
+      69/      3E : 50 8E                   JMS LCDmsgloop      ;
+      70/      40 : 28 C0                   FIM R8R9, 0xC0      ;
+      71/      42 : 50 A6                   JMS LCDctrl         ; second row on LCD
+      72/      44 : 20 D6                   FIM R0R1, LCDmsg1   ;
+      73/      46 : 50 8E                   JMS LCDmsgloop      ;
+      74/      48 :                     
+      75/      48 : 2A 00                   FIM RaRb, 0         ;
+      76/      4A : 40 7B                   JUN SHIFT
+      77/      4C :                     
+      78/      4C :                     DELAY320US
+      79/      4C : 24 00                   FIM R4R5, 0
+      80/      4E :                     DELAY320USLOOP
+      81/      4E : 74 4E                   ISZ R4, DELAY320USLOOP
+      82/      50 : C0                      BBL 0
+      83/      51 :                     
+      84/      51 :                     DELAY5MS4
+      85/      51 : 24 00                   FIM R4R5, 0
+      86/      53 :                     DELAY5MS4LOOP
+      87/      53 : 74 53                   ISZ R4, DELAY5MS4LOOP
+      88/      55 : 75 53                   ISZ R5, DELAY5MS4LOOP
+      89/      57 : C0                      BBL 0
+      90/      58 :                     
+      91/      58 :                     DELAY16MS
+      92/      58 : 24 00                   FIM R4R5, 0
+      93/      5A : 26 D0                   FIM R6R7, 0xD0
+      94/      5C :                     DELAY16MSLOOP
+      95/      5C : 74 5C                   ISZ R4, DELAY16MSLOOP
+      96/      5E : 75 5C                   ISZ R5, DELAY16MSLOOP
+      97/      60 : 76 5C                   ISZ R6, DELAY16MSLOOP
+      98/      62 : C0                      BBL 0
+      99/      63 :                     
+     100/      63 :                     DELAY87MS
+     101/      63 : 24 00                   FIM R4R5, 0
+     102/      65 : 26 00                   FIM R6R7, 0
+     103/      67 :                     DELAY87MSLOOP
+     104/      67 : 74 67                   ISZ R4, DELAY87MSLOOP   ; Delay loop, 320 us 1x
+     105/      69 : 75 67                   ISZ R5, DELAY87MSLOOP   ; Delay loop, 5.4 ms 2x
+     106/      6B : 76 67                   ISZ R6, DELAY87MSLOOP   ; Delay loop, 87.36 ms 3x
+     107/      6D : C0                      BBL 0
+     108/      6E :                     
+     109/      6E :                     DELAY1S4
+     110/      6E : 24 00                   FIM R4R5, 0
+     111/      70 : 26 00                   FIM R6R7, 0
+     112/      72 :                     DELAY1S4LOOP
+     113/      72 : 74 72                   ISZ R4, DELAY1S4LOOP
+     114/      74 : 75 72                   ISZ R5, DELAY1S4LOOP
+     115/      76 : 76 72                   ISZ R6, DELAY1S4LOOP
+     116/      78 : 77 72                   ISZ R7, DELAY1S4LOOP
+     117/      7A : C0                      BBL 0
+     118/      7B :                     
+     119/      7B :                     SHIFT
+     120/      7B : 74 7B                   ISZ R4, SHIFT       ;
+ AS V1.42 Beta [Bld 88] - source file 4004lcd.asm - page 3 - 6/25/2020 12:09:10
+
+
+     121/      7D : 75 7B                   ISZ R5, SHIFT       ;
+     122/      7F : 76 7B                   ISZ R6, SHIFT       ;87.36ms 3x
+     123/      81 :                         ;ISZ R7, SHIFT       ;
+     124/      81 :                         
+     125/      81 :                         ;LDM 2
+     126/      81 :                         ;DCL
+     127/      81 :                         ;FIM R0R1, 0x1C      ;
+     128/      81 :                         ;JMS LCDctrl         ;
+     129/      81 :                         
+     130/      81 : D0                      LDM 0               ;
+     131/      82 : FD                      DCL
+     132/      83 :                         ;INC R9
+     133/      83 :                         ;SRC R8R9
+     134/      83 :                         ;WMP                 ;
+     135/      83 :                         ;LDM 5               ;
+     136/      83 :                         ;WR3                 ;
+     137/      83 :                         ;WRM                 ;
+     138/      83 :                         ;WRR                 ;
+     139/      83 : AB                      LD Rb               ;
+     140/      84 : F2                      IAC                 ;
+     141/      85 :                         ;WRR                 ;
+     142/      85 :                         ;SRC RaRb
+     143/      85 : E1                      WMP                 ;
+     144/      86 : BB                      XCH Rb              ;
+     145/      87 : F7                      TCC                 ;
+     146/      88 : 8A                      ADD Ra              ;
+     147/      89 : E2                      WRR                 ;
+     148/      8A :                         ;WR1                 ;
+     149/      8A : BA                      XCH Ra              ;
+     150/      8B : 2B                      SRC RaRb            ;
+     151/      8C :                         
+     152/      8C : 40 7B                   JUN SHIFT           ;
+     153/      8E :                     
+     154/      8E :                     
+     155/      8E :                     LCDmsgloop
+     156/      8E : 38                      FIN R8R9            ;
+     157/      8F : A9                      LD R9               ;
+     158/      90 : 1C 95                   JCN NZ, LCDmsgloop2         ;
+     159/      92 : A8                      LD R8               ;
+     160/      93 : 14 9F                   JCN Z, LCDmsgloopend        ;
+     161/      95 :                     LCDmsgloop2
+     162/      95 : 50 A0                   JMS LCDdata         ;
+     163/      97 : A1                      LD R1               ;
+     164/      98 : F2                      IAC                 ;
+     165/      99 : B1                      XCH R1              ;
+     166/      9A : F7                      TCC                 ;
+     167/      9B : 80                      ADD R0              ;
+     168/      9C : B0                      XCH R0              ;
+     169/      9D : 40 8E                   JUN LCDmsgloop      ;
+     170/      9F :                     LCDmsgloopend
+     171/      9F : C0                      BBL 0               ;
+     172/      A0 :                     
+     173/      A0 :                     LCDdata
+     174/      A0 : 22 03                   FIM R2R3, 3         ; Load 3 to R3 (RS = 1)
+     175/      A2 : A3                      LD R3               ; R3 -> ACC
+     176/      A3 : E4                      WR0                 ; Write to port W on 4265 (ctrl)
+     177/      A4 : 40 AC                   JUN LCDbyte         ;
+     178/      A6 :                     
+     179/      A6 :                     LCDctrl
+     180/      A6 : 22 01                   FIM R2R3, 1         ; Load 1 to R3 (RS = 0)
+ AS V1.42 Beta [Bld 88] - source file 4004lcd.asm - page 4 - 6/25/2020 12:09:10
+
+
+     181/      A8 : A3                      LD R3               ; R3 -> ACC
+     182/      A9 : E4                      WR0                 ; Write to port W on 4265 (ctrl)
+     183/      AA : 40 AC                   JUN LCDbyte         ;
+     184/      AC :                     
+     185/      AC :                     LCDbyte
+     186/      AC : A8                      LD R8               ; R8 -> ACC
+     187/      AD : E5                      WR1                 ; Write to port X on 4265 (data)
+     188/      AE : D8                      LDM 8               ; 8 -> ACC
+     189/      AF : 83                      ADD R3              ; 8 + R3 -> EN + RS + R/W
+     190/      B0 : E4                      WR0                 ; Write to port W on 4265 (ctrl)
+     191/      B1 : F0                      CLB                 ; 0 -> ACC, 0 -> Carry flag
+     192/      B2 : 83                      ADD R3              ; 0 + R3 -> EN + RS + R/W
+     193/      B3 : E4                      WR0                 ; Write to port W on 4265 (ctrl)
+     194/      B4 : A9                      LD R9               ; R9 -> ACC
+     195/      B5 :                     
+     196/      B5 :                     LCDdirect
+     197/      B5 : E5                      WR1                 ; Write to port X on 4265 (data)
+     198/      B6 : D8                      LDM 8               ; 8 -> ACC
+     199/      B7 : 83                      ADD R3              ; 8 + R3 -> EN + RS + R/W
+     200/      B8 : E4                      WR0                 ; Write to port W on 4265 (ctrl)
+     201/      B9 : F0                      CLB                 ; 0 -> ACC, 0 -> Carry flag
+     202/      BA : 83                      ADD R3              ; 0 + R3 -> EN + RS + R/W
+     203/      BB : E4                      WR0                 ; Write to port W on 4265 (ctrl)
+     204/      BC : C0                      BBL 0               ; Return
+     205/      BD :                     
+     206/      BD :                     ;   DATA "123456789012345678901234"
+     207/      BD :                     LCDmsg0
+     208/      BD : 49 6E 74 65 6C 20       DATA "Intel 4004 CPU working! ",0
+                    34 30 30 34 20 43 
+                    50 55 20 77 6F 72 
+                    6B 69 6E 67 21 20 
+                    00 
+     209/      D6 :                     
+     210/      D6 :                     LCDmsg1
+     211/      D6 : 49 6E 74 65 6C 20       DATA "Intel 4004 system by Jan",0
+                    34 30 30 34 20 73 
+                    79 73 74 65 6D 20 
+                    62 79 20 4A 61 6E 
+                    00 
+     212/      EF :                     
+ AS V1.42 Beta [Bld 88] - source file 4004lcd.asm - page 5 - 6/25/2020 12:09:10
+
+
+  symbol table (* = unused):
+  ------------------------
+
+*ARCHITECTURE :  i386-unknown-win32 - | *BIGENDIAN :                      0 - |
+*BRANCHEXT :                      0 - | *CASESENSITIVE :                  0 - |
+*CONSTPI :        3.141592653589793 - | *DATE :                   6/25/2020 - |
+ DELAY16MS :                     58 C |  DELAY16MSLOOP :                 5C C |
+*DELAY1S4 :                      6E C |  DELAY1S4LOOP :                  72 C |
+ DELAY320US :                    4C C |  DELAY320USLOOP :                4E C |
+ DELAY5MS4 :                     51 C |  DELAY5MS4LOOP :                 53 C |
+*DELAY87MS :                     63 C |  DELAY87MSLOOP :                 67 C |
+*FALSE :                          0 - | *FULLPMMU :                       1 - |
+*HAS64 :                          1 - | *HASDSP :                         0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INEXTMODE :                      0 - | *INLWORDMODE :                    0 - |
+*INMAXMODE :                      0 - | *INSRCMODE :                      0 - |
+*INSUPMODE :                      0 - |  LCDBYTE :                       AC C |
+ LCDCTRL :                       A6 C |  LCDDATA :                       A0 C |
+ LCDDIRECT :                     B5 C |  LCDMSG0 :                       BD C |
+ LCDMSG1 :                       D6 C |  LCDMSGLOOP :                    8E C |
+ LCDMSGLOOP2 :                   95 C |  LCDMSGLOOPEND :                 9F C |
+*LISTON :                         1 - | *MACEXP :                         1 - |
+*MOMCPU :                      4004 - | *MOMCPUNAME :                  4004 - |
+*NESTMAX :                      100 - | *PACKING :                        0 - |
+*PADDING :                        1 - | *RELAXED :                        1 - |
+ SHIFT :                         7B C | *TIME :                    12:09:10 - |
+*TRUE :                           1 - | *VERSION :                     142F - |
+
+     48 symbols
+     30 unused symbols
+
+ AS V1.42 Beta [Bld 88] - source file 4004lcd.asm - page 6 - 6/25/2020 12:09:10
+
+
+  codepages:
+  ----------
+
+STANDARD (0 changed characters)
+
+
+0.00 seconds assembly time
+
+    212 lines source file
+      2 passes
+      0 errors
+      0 warnings
